@@ -41,15 +41,15 @@
         const projectsContainer = document.getElementById('projects-list-container');
         if (projectsContainer && CFG.ourApps && Array.isArray(CFG.ourApps)) {
             projectsContainer.innerHTML = CFG.ourApps.map(app => `
-                <div style="padding:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:14px;">
-                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:${app.description ? '10px' : '0'};">
-                        <div style="width:44px; height:44px; border-radius:10px; overflow:hidden; flex-shrink:0;">
+                <div style="padding:14px 14px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:${app.description ? '8px' : '0'};">
+                        <div style="width:42px; height:42px; border-radius:10px; overflow:hidden; flex-shrink:0;">
                             <img src="${app.logo || ''}" alt="${app.name}" style="width:100%; height:100%; object-fit:contain;">
                         </div>
-                        <div style="font-size:15px; font-weight:700; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${app.name}</div>
+                        <div style="font-size:15px; font-weight:700; flex:1;">${app.name}</div>
                         <button style="background:var(--accent); border:none; padding:7px 14px; border-radius:20px; color:#000; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0;" onclick="window.open('${app.url}', '_blank')">Descargar</button>
                     </div>
-                    ${app.description ? `<p style="margin:0; font-size:12.5px; color:var(--text2); line-height:1.5; padding-left:56px;">${app.description}</p>` : ''}
+                    ${app.description ? `<p style="margin:0; font-size:13px; color:var(--text2); line-height:1.55; word-break:break-word;">${app.description}</p>` : ''}
                 </div>
             `).join('');
         }
