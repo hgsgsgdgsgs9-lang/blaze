@@ -41,15 +41,15 @@
         const projectsContainer = document.getElementById('projects-list-container');
         if (projectsContainer && CFG.ourApps && Array.isArray(CFG.ourApps)) {
             projectsContainer.innerHTML = CFG.ourApps.map(app => `
-                <div style="display:flex; align-items:center; gap:16px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:12px; flex-shrink: 0;">
-                    <div style="width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                        <img src="${app.logo || ''}" alt="${app.name}" style="width:100%; height:100%; object-fit:contain;">
+                <div style="padding:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:14px;">
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:${app.description ? '10px' : '0'};">
+                        <div style="width:44px; height:44px; border-radius:10px; overflow:hidden; flex-shrink:0;">
+                            <img src="${app.logo || ''}" alt="${app.name}" style="width:100%; height:100%; object-fit:contain;">
+                        </div>
+                        <div style="font-size:15px; font-weight:700; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${app.name}</div>
+                        <button style="background:var(--accent); border:none; padding:7px 14px; border-radius:20px; color:#000; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0;" onclick="window.open('${app.url}', '_blank')">Descargar</button>
                     </div>
-                    <div style="flex:1;">
-                        <h4 style="margin:0; font-size:15px; font-weight:700;">${app.name}</h4>
-                        <p style="margin:2px 0 0; font-size:12px; color:var(--text3);">${app.description}</p>
-                    </div>
-                    <button style="background:var(--bg3); border:none; padding:6px 12px; border-radius:20px; color:var(--text); font-size:12px; font-weight:600; cursor:pointer;" onclick="window.open('${app.url}', '_blank')">Descargar</button>
+                    ${app.description ? `<p style="margin:0; font-size:12.5px; color:var(--text2); line-height:1.5; padding-left:56px;">${app.description}</p>` : ''}
                 </div>
             `).join('');
         }
