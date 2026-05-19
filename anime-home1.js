@@ -1743,6 +1743,19 @@
             openModal('welcome-modal-overlay');
         }
 
+        const welcomeLogoContainer = document.getElementById('welcome-logo-container');
+        if (welcomeLogoContainer) {
+            if (CFG.aboutLogoUrl) {
+                welcomeLogoContainer.innerHTML = `<img src="${CFG.aboutLogoUrl}" alt="${CFG.appName}" style="height:48px;max-width:100%;object-fit:contain">`;
+                welcomeLogoContainer.style.background = 'none';
+                welcomeLogoContainer.style.boxShadow = 'none';
+            } else {
+                const initial = CFG.appName ? CFG.appName.charAt(0).toUpperCase() : 'W';
+                welcomeLogoContainer.innerHTML = `<span id="welcome-logo-icon" style="font-size: 36px; padding-bottom: 2px; color: #000; font-weight: 800;">${initial}</span>`;
+            }
+        }
+
+        // Nuestras Apps Modal (Render dinámico y scrollable)
         function renderProjectsModal() {
             const projectsContainer = document.getElementById('projects-list-container');
             if (projectsContainer && CFG.ourApps && Array.isArray(CFG.ourApps)) {
@@ -1751,13 +1764,13 @@
                     return;
                 }
                 projectsContainer.innerHTML = CFG.ourApps.map(app => `
-                    <div style="padding:14px 14px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px;">
+                    <div class="project-item" style="padding:14px 14px 12px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:14px; transition: transform 0.2s ease;">
                         <div style="display:flex; align-items:center; gap:12px; margin-bottom:${app.description ? '8px' : '0'};">
-                            <div style="width:42px; height:42px; border-radius:10px; overflow:hidden; flex-shrink:0;">
-                                <img src="${app.logo || ''}" alt="${app.name}" style="width:100%; height:100%; object-fit:contain;">
+                            <div style="width:42px; height:42px; border-radius:10px; overflow:hidden; flex-shrink:0; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;">
+                                <img src="${app.logo || ''}" alt="${app.name}" style="width:100%; height:100%; object-fit:contain;" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><path d=%22M9 12l2 2 4-4%22/></svg>'">
                             </div>
-                            <div style="font-size:15px; font-weight:700; flex:1;">${app.name}</div>
-                            <button style="background:var(--accent); border:none; padding:7px 14px; border-radius:20px; color:#000; font-size:12px; font-weight:700; cursor:pointer; flex-shrink:0;" onclick="window.open('${app.url}', '_blank')">Descargar</button>
+                            <div style="font-size:15px; font-weight:700; flex:1; color:var(--text);">${app.name}</div>
+                            <button style="background:var(--accent); border:none; padding:8px 16px; border-radius:20px; color:#000; font-size:12px; font-weight:800; cursor:pointer; flex-shrink:0; transition: transform 0.2s;" onclick="window.open('${app.url}', '_blank')" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Descargar</button>
                         </div>
                         ${app.description ? `<p style="margin:0; font-size:13px; color:var(--text2); line-height:1.55; word-break:break-word;">${app.description}</p>` : ''}
                     </div>
