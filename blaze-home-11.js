@@ -19,6 +19,41 @@
         const name = CFG.appName || 'ANiGo';
         document.title = name;
 
+        // Welcome Modal
+        const welcomeTitle = document.getElementById('welcome-title-text');
+        if (welcomeTitle) welcomeTitle.textContent = `¡Bienvenido a ${name}!`;
+
+        const welcomeDesc = document.getElementById('welcome-desc-text');
+        if (welcomeDesc) welcomeDesc.textContent = CFG.aboutDescription || `${name} es tu plataforma personal para descubrir y seguir el anime que más te gusta.`;
+
+        const welcomeLogoContainer = document.getElementById('welcome-logo-container');
+        if (welcomeLogoContainer) {
+            if (CFG.aboutLogoUrl) {
+                welcomeLogoContainer.innerHTML = `<img src="${CFG.aboutLogoUrl}" alt="${name}" style="height:48px;max-width:100%;object-fit:contain">`;
+                welcomeLogoContainer.style.background = 'none';
+                welcomeLogoContainer.style.boxShadow = 'none';
+            } else {
+                welcomeLogoContainer.innerHTML = `<span id="welcome-logo-icon" style="font-size: 36px; padding-bottom: 2px; color: #000;">${name.charAt(0).toUpperCase()}</span>`;
+            }
+        }
+
+        // Nuestras Apps Modal (Render dinámico y scrollable)
+        const projectsContainer = document.getElementById('projects-list-container');
+        if (projectsContainer && CFG.ourApps && Array.isArray(CFG.ourApps)) {
+            projectsContainer.innerHTML = CFG.ourApps.map(app => `
+                <div style="display:flex; align-items:center; gap:16px; padding:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:12px; flex-shrink: 0;">
+                    <div style="width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                        <img src="${app.logo || ''}" alt="${app.name}" style="width:100%; height:100%; object-fit:contain;">
+                    </div>
+                    <div style="flex:1;">
+                        <h4 style="margin:0; font-size:15px; font-weight:700;">${app.name}</h4>
+                        <p style="margin:2px 0 0; font-size:12px; color:var(--text3);">${app.description}</p>
+                    </div>
+                    <button style="background:var(--bg3); border:none; padding:6px 12px; border-radius:20px; color:var(--text); font-size:12px; font-weight:600; cursor:pointer;" onclick="window.open('${app.url}', '_blank')">Descargar</button>
+                </div>
+            `).join('');
+        }
+
         // Header & Sidebar: logo imagen o texto
         const logos = document.querySelectorAll('.logo');
         logos.forEach(logoEl => {
@@ -1917,6 +1952,62 @@
 
     function init() {
         buildSearchCache(); // Construir caché de búsqueda
+
+        function handleWelcomeClose() {
+            const cb = $('welcome-dont-show-cb');
+            if (cb && cb.checked) {
+                localStorage.setItem('wolfanime_welcome_seen_v1', '1');
+            } else {
+                localStorage.removeItem('wolfanime_welcome_seen_v1');
+            }
+            closeModal('welcome-modal-overlay');
+        }
+
+        if (!localStorage.getItem('wolfanime_welcome_seen_v1')) {
+            openModal('welcome-modal-overlay');
+        }
+
+        const btnWelcomeStart = $('welcome-start-btn');
+        if (btnWelcomeStart) {
+            btnWelcomeStart.addEventListener('click', handleWelcomeClose);
+        }
+
+        const btnWelcomeProjects = $('welcome-projects-btn');
+        if (btnWelcomeProjects) {
+            btnWelcomeProjects.addEventListener('click', () => {
+                handleWelcomeClose();
+                openModal('projects-modal-overlay');
+            });
+        }
+
+        const btnWelcomeClose = $('welcome-close-btn');
+        if (btnWelcomeClose) {
+            btnWelcomeClose.addEventListener('click', handleWelcomeClose);
+        }
+
+        const btnProjectsBack = $('projects-back-btn');
+        if (btnProjectsBack) {
+            btnProjectsBack.addEventListener('click', () => {
+                closeModal('projects-modal-overlay');
+                openModal('welcome-modal-overlay');
+            });
+        }
+        
+        const overlayProjects = $('projects-modal-overlay');
+        if (overlayProjects) {
+            overlayProjects.addEventListener('click', e => {
+                if (e.target.id === 'projects-modal-overlay') closeModal('projects-modal-overlay');
+            });
+        }
+
+        const overlayWelcome = $('welcome-modal-overlay');
+        if (overlayWelcome) {
+            overlayWelcome.addEventListener('click', e => {
+                if (e.target.id === 'welcome-modal-overlay') {
+                    handleWelcomeClose();
+                }
+            });
+        }
 
         renderFilterChips();
         renderHome();
