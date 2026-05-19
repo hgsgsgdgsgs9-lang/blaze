@@ -3801,7 +3801,7 @@ input[type="text"]::-ms-clear {
     justify-content: center;
     color: #000;
     overflow: hidden;
-    box-shadow: 0 10px 25px rgba(105, 255, 180, 0.2);
+    box-shadow: 0 10px 25px rgba(255, 170, 0, 0.2);
     font-size: 32px;
     font-weight: 900;
 }
