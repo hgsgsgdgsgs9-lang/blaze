@@ -1930,7 +1930,7 @@
             navigateTo('home');
         }
 
-        document.getElementById('cat-library-back').addEventListener('click', () => navigateTo(state.prev || 'categories', true));
+        document.getElementById('cat-library-back').addEventListener('click', () => navigateTo('genres', true));
         document.getElementById('all-library-back').addEventListener('click', () => navigateTo(state.prev || 'home', true));
 
         const historyBtn = $('search-history-btn');
