@@ -74,6 +74,7 @@
     let watchStatus = JSON.parse(localStorage.getItem(WATCH_STATUS_KEY) || '{}');
     const APP_STATE_KEY = 'wolfanime_last_state';
     let state = { view: null, prev: null, detail: null, catFilter: null, searchQ: '', favFilter: 'all' };
+    let navHistory = [];
     let viewScrolls = {};
 
     // Hybrid Lazy Load Persisted URL Cache
@@ -81,7 +82,7 @@
     try {
         const stored = JSON.parse(localStorage.getItem('wolfanime_img_cache_v1') || '[]');
         window.loadedImageCache = new Set(stored);
-    } catch(e) {}
+    } catch (e) { }
 
     function saveImageCache(url) {
         if (!url || url === 'undefined' || url.includes('var(--')) return;
@@ -94,7 +95,7 @@
                     window.loadedImageCache = new Set(arr);
                 }
                 localStorage.setItem('wolfanime_img_cache_v1', JSON.stringify(arr));
-            } catch(e) {}
+            } catch (e) { }
         }
     }
 
@@ -111,7 +112,7 @@
     function forceLoadImage(el) {
         if (el.dataset.loading === '1') return;
         el.dataset.loading = '1';
-        
+
         const bgStr = el.dataset.bg;
         if (!bgStr || bgStr === 'undefined') return;
 
@@ -125,21 +126,21 @@
                     el.style.setProperty('background-position', 'center', 'important');
                 }
                 el.style.backgroundRepeat = 'no-repeat';
-                
+
                 const currentAnim = el.style.animation || '';
                 if (currentAnim.includes('shimmer')) {
                     el.style.animation = currentAnim.split(',').filter(a => !a.includes('shimmer')).join(',').trim() || 'none';
                 } else if (!el.style.animation) {
                     el.style.animation = 'none';
                 }
-                
+
                 el.classList.add('loaded');
                 if (match && match[1]) saveImageCache(match[1]);
             };
             img.onload = applyBg;
             img.onerror = applyBg;
             img.src = match[1];
-            
+
             if (img.complete) {
                 applyBg();
             } else {
@@ -245,7 +246,7 @@
         _pendingHistoryDeleteQuery = query;
         const textEl = $('history-single-confirm-query-text');
         if (textEl) textEl.textContent = `¿Deseas eliminar "${query}" de tu historial?`;
-        
+
         const overlay = $('history-single-confirm-overlay');
         if (overlay) {
             overlay.classList.add('open');
@@ -273,13 +274,13 @@
         const list = $('search-history-list');
         const empty = $('search-history-empty');
         if (!list || !empty) return;
-        
+
         if (!searchHistory.length) {
             list.innerHTML = '';
             empty.style.display = 'flex';
             return;
         }
-        
+
         empty.style.display = 'none';
         list.innerHTML = searchHistory.map(q => `
             <div class="history-item" data-history-q="${q}">
@@ -386,7 +387,7 @@
             }
             showToast('Restauración completada');
             closeModal('restore-text-overlay');
-            
+
             // Refrescar UI dinámicamente
             renderHomeFavs();
             renderFavorites();
@@ -484,7 +485,7 @@
         };
         input.click();
     }
-    
+
     const toggleFav = id => {
         favs = isFav(id) ? favs.filter(f => f !== id) : [...favs, id];
         saveFavs();
@@ -570,7 +571,7 @@
         const cats = d.category ? d.category.split(/,\s*/).map(c => c.trim()) : [];
         return !cats.includes('+18') && !cats.includes('H');
     });
-    
+
     const saveHEnabled = () => localStorage.setItem('h_enabled', hCatEnabled ? '1' : '0');
 
     function formatAdded(d) {
@@ -591,7 +592,7 @@
         }
         return item.image || 'var(--card-bg)';
     }
-    
+
     function backdropBg(item) {
         const url = item.backdrop || item.poster || item.image;
         if (url && (url.startsWith('http') || url.startsWith('//'))) {
@@ -820,7 +821,7 @@
             const statusColor = '';
             const year = item.date ? item.date.substring(0, 4) : '';
             const bg = layout === 'horizontal' ? backdropBg(item) : posterBg(item);
-            
+
             div.innerHTML = `<div class="slider-poster">
                 <div ${getLazyBgAttrs('slider-poster-bg', bg)}></div>
                 <div class="slider-poster-overlay"></div>
@@ -888,7 +889,7 @@
                 }
                 isScrolling = false;
             }, 150);
-        }, {passive: true});
+        }, { passive: true });
 
         dotsEl.onclick = (e) => {
             const dot = e.target.closest('.dot');
@@ -904,8 +905,8 @@
                 }, 5000);
             };
             startAuto();
-            track.addEventListener('touchstart', () => clearInterval(timer), {passive: true});
-            track.addEventListener('touchend', startAuto, {passive: true});
+            track.addEventListener('touchstart', () => clearInterval(timer), { passive: true });
+            track.addEventListener('touchend', startAuto, { passive: true });
         }
     }
 
@@ -956,7 +957,7 @@
         function renderNextChunk() {
             const chunk = items.slice(pos, pos + chunkSize);
             if (chunk.length === 0) return;
-            
+
             // Render HTML
             const html = chunk.map((item, i) => rendererFunc(item, pos + i)).join('');
             container.insertAdjacentHTML('beforeend', html);
@@ -995,7 +996,7 @@
             bgAttrs = `class="scard-poster loaded" style="background: ${bgStr} !important; animation: none !important;"`;
         }
         // Cap stagger delay heavily to prevent massive lag
-        const delay = (index % 24) * 0.04; 
+        const delay = (index % 24) * 0.04;
         return `<div class="scard${h ? ' scard-h' : ''}" data-id="${item.id}" style="animation: revealIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; animation-delay: ${delay}s; opacity: 0;">
     <div ${bgAttrs}>
       ${h ? '<span class="h-badge">18+</span>' : ''}
@@ -1019,7 +1020,7 @@
         const trimmedQ = q.trim();
         const lower = trimmedQ.toLowerCase();
         let results = visibleDATA();
-        
+
         // Uso la caché pre-computada de búsqueda (muy rápido)
         if (trimmedQ) {
             results = results.filter(d => (d._searchText || '').includes(lower));
@@ -1067,12 +1068,12 @@
         };
 
         const allCards = [
-            { nav: 'movies-all',   title: 'Pel\u00edculas',         conf: getConf('movies') },
-            { nav: 'series-all',   title: 'Series',            conf: getConf('series') },
-            { nav: 'genres',       title: 'G\u00e9neros',           conf: getConf('genres') },
-            { nav: 'classics-all', title: 'M\u00e1s Antiguos',      conf: getConf('classics') },
-            { nav: 'recent-all',   title: '\u00daltimos Agregados',  conf: getConf('recentAdded') },
-            { nav: 'trending-all', title: 'Tendencias',         conf: getConf('trending') }
+            { nav: 'movies-all', title: 'Pel\u00edculas', conf: getConf('movies') },
+            { nav: 'series-all', title: 'Series', conf: getConf('series') },
+            { nav: 'genres', title: 'G\u00e9neros', conf: getConf('genres') },
+            { nav: 'classics-all', title: 'M\u00e1s Antiguos', conf: getConf('classics') },
+            { nav: 'recent-all', title: '\u00daltimos Agregados', conf: getConf('recentAdded') },
+            { nav: 'trending-all', title: 'Tendencias', conf: getConf('trending') }
         ];
 
         primaryContainer.innerHTML = allCards.map(makeCard).join('');
@@ -1141,7 +1142,7 @@
         if (!grid) return;
 
         grid.classList.remove('layout-horizontal');
-        
+
         if (state.filterType === 'featured') {
             items = items.filter(d => d.featured);
             title = 'Todos los Destacados';
@@ -1170,7 +1171,7 @@
 
         const countEl = $('all-library-count');
         if (countEl) countEl.textContent = `${items.length} títulos`;
-        
+
         renderInChunks(sorted, grid, (d, i) => searchCardHTML(d, i, false));
     }
 
@@ -1289,7 +1290,7 @@
 
         const versionEl = $('profile-version');
         if (versionEl) versionEl.textContent = CFG.version || '1.0.0';
-        
+
         const reqBtn = $('request-content-btn');
         const reqGrp = $('request-content-group');
         if (reqBtn) {
@@ -1577,10 +1578,17 @@
             if (oldView) viewScrolls[state.view] = oldView.scrollTop;
         }
 
-        state.prev = state.view;
+        if (back) {
+            const idx = navHistory.lastIndexOf(view);
+            if (idx !== -1) navHistory = navHistory.slice(0, idx);
+        } else if (state.view && state.view !== view) {
+            navHistory.push(state.view);
+        }
+
+        state.prev = navHistory.length > 0 ? navHistory[navHistory.length - 1] : (view === 'home' ? null : 'home');
         state.view = view;
         next.classList.add('active');
-        
+
         if (viewScrolls[view] !== undefined) {
             next.scrollTop = viewScrolls[view];
         } else {
@@ -1595,7 +1603,7 @@
         const header = document.getElementById('header');
         const main = document.getElementById('main');
         const isFullscreenView = ['search', 'search-history', 'categories', 'genres', 'cat-library', 'all-library', 'detail', 'favorites'].includes(view) || view.startsWith('settings');
-        
+
         if (isFullscreenView) {
             header.style.display = 'none';
             main.style.marginTop = '0';
@@ -1681,7 +1689,7 @@
         if (state.view === 'home') renderHome();
         if (state.view === 'search') renderSearch($('search-input').value, state.catFilter);
         renderProfile();
-        
+
         if (state.view === 'detail' && state.detail) {
             const btn = document.getElementById('detail-mylist-btn');
             if (btn) {
@@ -1787,7 +1795,7 @@
         o.classList.add('open');
         o.setAttribute('aria-hidden', 'false');
     }
-    
+
     function closeRemoveConfirm() {
         const o = document.getElementById('remove-confirm-overlay');
         o.classList.remove('open');
@@ -1901,7 +1909,7 @@
             if (clear) clear.classList.add('visible');
             state.catFilter = null;
             renderSearch(q, null);
-            renderFilterChips(); 
+            renderFilterChips();
             navigateTo('search');
             return;
         }
@@ -1909,7 +1917,7 @@
 
     function init() {
         buildSearchCache(); // Construir caché de búsqueda
-        
+
         renderFilterChips();
         renderHome();
         renderSearch();
@@ -1922,7 +1930,7 @@
             navigateTo('home');
         }
 
-        document.getElementById('cat-library-back').addEventListener('click', () => navigateTo('categories', true));
+        document.getElementById('cat-library-back').addEventListener('click', () => navigateTo(state.prev || 'categories', true));
         document.getElementById('all-library-back').addEventListener('click', () => navigateTo(state.prev || 'home', true));
 
         const historyBtn = $('search-history-btn');
@@ -1943,7 +1951,7 @@
             searchInputEl.addEventListener('input', debounce(e => {
                 const q = e.target.value;
                 searchClearEl.classList.toggle('visible', q.length > 0);
-                
+
                 if (q.length > 0 && state.catFilter) {
                     state.catFilter = null;
                     renderFilterChips();
