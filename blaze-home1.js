@@ -1587,7 +1587,7 @@
             next.scrollTop = 0;
         }
 
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === view || (view === 'cat-library' && b.dataset.nav === 'categories') || (view === 'genres' && b.dataset.nav === 'categories') || (view === 'all-library' && ((state.filterType === 'movies' || state.filterType === 'series') ? b.dataset.nav === 'categories' : b.dataset.nav === 'home'))));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.nav === view || (view === 'cat-library' && b.dataset.nav === 'categories') || (view === 'genres' && b.dataset.nav === 'categories') || (view === 'all-library' && (((state.filterType === 'movies' || state.filterType === 'series') && state.prev === 'categories') ? b.dataset.nav === 'categories' : b.dataset.nav === 'home'))));
 
         if (view === 'settings-info') renderAboutInfo();
         if (view === 'settings-data') updateSearchHistoryCountLabel();
