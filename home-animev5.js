@@ -876,7 +876,16 @@
         const track = $('cw-track');
         if (!section || !track) return;
 
-        const items = getCWItems();
+        let items = getCWItems();
+        
+        // Filter H content if disabled
+        if (!hCatEnabled) {
+            items = items.filter(m => {
+                const info = (window.DATA || []).find(d => String(d.id) === String(m.serieId) || d.url === 'go:' + m.serieId);
+                return !isH(info);
+            });
+        }
+
         if (!items.length) { 
             section.style.display = 'none'; 
             console.log('CW: No items to show');
