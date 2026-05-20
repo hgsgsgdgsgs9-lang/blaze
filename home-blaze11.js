@@ -389,12 +389,21 @@
 
     function generateTextBackup() {
         try {
+            const cwData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k.startsWith('cw_meta_') || k.startsWith('resume_') || k.startsWith('watched_')) {
+                    cwData[k] = localStorage.getItem(k);
+                }
+            }
+
             const data = {
                 favs: favs,
                 watchStatus: watchStatus,
                 history: searchHistory,
+                cw: cwData,
                 settings: { h: hCatEnabled },
-                v: '1.1',
+                v: '1.2',
                 app: 'WolfStream'
             };
             const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
@@ -418,15 +427,24 @@
             if (data.favs) { favs = data.favs; saveFavs(); }
             if (data.watchStatus) { watchStatus = data.watchStatus; saveWatchStatus(); }
             if (data.history) { searchHistory = data.history; saveSearchHistory(); }
+            if (data.cw) {
+                Object.entries(data.cw).forEach(([k, v]) => {
+                    localStorage.setItem(k, v);
+                });
+            }
+
             if (data.settings) {
-                if (data.settings.h !== undefined) localStorage.setItem('h_enabled', data.settings.h ? '1' : '0');
-                if (data.settings.aw !== undefined) localStorage.setItem('auto_watched', data.settings.aw ? '1' : '0');
+                if (data.settings.h !== undefined) {
+                    hCatEnabled = !!data.settings.h;
+                    localStorage.setItem('h_enabled', hCatEnabled ? '1' : '0');
+                }
             }
             showToast('Restauración completada');
             closeModal('restore-text-overlay');
 
             // Refrescar UI dinámicamente
-            renderHomeFavs();
+            renderHome();
+            renderContinueWatching();
             renderFavorites();
             renderProfile();
             renderCategories();
@@ -461,10 +479,19 @@
 
     function exportUserData() {
         try {
+            const cwData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k.startsWith('cw_meta_') || k.startsWith('resume_') || k.startsWith('watched_')) {
+                    cwData[k] = localStorage.getItem(k);
+                }
+            }
+
             const data = {
                 favorites: favs,
                 watchStatus: watchStatus,
                 searchHistory: searchHistory,
+                cw: cwData,
                 settings: {
                     hCatEnabled: hCatEnabled,
                 },
@@ -502,6 +529,11 @@
                     if (data.watchStatus) {
                         watchStatus = data.watchStatus;
                         saveWatchStatus();
+                    }
+                    if (data.cw) {
+                        Object.entries(data.cw).forEach(([k, v]) => {
+                            localStorage.setItem(k, v);
+                        });
                     }
                     if (data.settings) {
                         if (data.settings.hCatEnabled !== undefined) {
@@ -799,7 +831,16 @@
         const track = $('cw-track');
         if (!section || !track) return;
 
-        const items = getCWItems();
+        let items = getCWItems();
+
+        // Filter H content if disabled
+        if (!hCatEnabled) {
+            items = items.filter(m => {
+                const info = (window.DATA || []).find(d => String(d.id) === String(m.serieId) || d.url === 'go:' + m.serieId);
+                return !isH(info);
+            });
+        }
+
         if (!items.length) {
             section.style.display = 'none';
             console.log('CW: No items to show');
@@ -1485,16 +1526,7 @@
         const pill = $('h-toggle-pill');
         if (pill) pill.classList.toggle('active', hCatEnabled);
 
-        const awPill = $('cfg-autowatched-pill');
-        if (awPill) {
-            const savedAW = localStorage.getItem('auto_watched');
-            if (savedAW === null) {
-                localStorage.setItem('auto_watched', '1');
-                awPill.classList.add('active');
-            } else {
-                awPill.classList.toggle('active', savedAW === '1');
-            }
-        }
+
 
         const langSel = $('preferred-lang-select');
         if (langSel) {
@@ -2176,7 +2208,7 @@
                 openModal('welcome-modal-overlay');
             });
         }
-        
+
         const overlayProjects = $('projects-modal-overlay');
         if (overlayProjects) {
             overlayProjects.addEventListener('click', e => {
@@ -2399,16 +2431,7 @@
             });
         }
 
-        const autoWatchToggle = document.getElementById('cfg-autowatched-row');
-        if (autoWatchToggle) {
-            autoWatchToggle.addEventListener('click', () => {
-                const current = localStorage.getItem('auto_watched');
-                const next = (current === null || current === '1') ? '0' : '1';
-                localStorage.setItem('auto_watched', next);
-                const pill = document.getElementById('cfg-autowatched-pill');
-                if (pill) pill.classList.toggle('active', next === '1');
-            });
-        }
+
 
         const langSelect = document.getElementById('preferred-lang-select');
         if (langSelect) {
