@@ -109,7 +109,9 @@
     let watchStatus = JSON.parse(localStorage.getItem(WATCH_STATUS_KEY) || '{}');
     const APP_STATE_KEY = 'wolfanime_last_state';
     let state = { view: null, prev: null, detail: null, catFilter: null, searchQ: '', favFilter: 'all' };
+    let _pendingCWDeleteId = null;
     let navHistory = [];
+
     let viewScrolls = {};
 
     // Hybrid Lazy Load Persisted URL Cache
@@ -672,7 +674,186 @@
   </div>`;
     }
 
+    // ── Continuar Viendo ───────────────────────────────────────
+    function getCWItems() {
+        const items = [];
+        const seenIds = new Set();
+        const allKeys = Object.keys(localStorage);
+
+        console.log('CW: Scanning ' + allKeys.length + ' keys in localStorage');
+
+        // 1. Primary: Rich metadata (cw_meta_)
+        allKeys.forEach(k => {
+            if (!k.startsWith('cw_meta_')) return;
+            try {
+                const m = JSON.parse(localStorage.getItem(k));
+                if (m && m.resumeKey) {
+                    if (!m.serieUrl && m.serieId) m.serieUrl = 'go:' + m.serieId;
+                    items.push(m);
+                    seenIds.add(String(m.serieId));
+                    console.log('CW: Found meta for ' + m.serieId);
+                } else if (m) {
+                    console.log('CW: Removing stale meta for ' + m.serieId);
+                    localStorage.removeItem(k);
+                }
+            } catch (e) {
+                console.error('CW: Error parsing metadata for key ' + k, e);
+                localStorage.removeItem(k);
+            }
+        });
+
+        // 2. Secondary: Legacy resume_ keys without metadata
+        allKeys.forEach(k => {
+            if (!k.startsWith('resume_')) return;
+
+            const parts = k.split('_');
+            if (parts.length < 3) return;
+
+            const rawId = parts[1];
+            if (seenIds.has(rawId)) return;
+
+            const info = (window.DATA || []).find(d => String(d.id) === rawId || d.url === 'go:' + rawId);
+            if (info) {
+                const seasonStr = parts[2] || 's0';
+                const epStr = parts[3] || 'e1';
+                const epNum = epStr.startsWith('e') ? parseInt(epStr.slice(1)) : 1;
+
+                items.push({
+                    serieId: rawId,
+                    serieTitle: info.title,
+                    poster: info.poster || info.image || '',
+                    serieUrl: 'go:' + rawId,
+                    seasonLabel: '',
+                    epNum: epNum,
+                    epTitle: '',
+                    progress: 50,
+                    updatedAt: 0,
+                    resumeKey: k
+                });
+                seenIds.add(rawId);
+                console.log('CW: Found legacy progress for ' + rawId);
+            }
+        });
+
+        const sorted = items.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        console.log('CW: Total items to show: ' + sorted.length);
+        return sorted;
+    }
+
+    function fmtCWTime(s) {
+        if (!s) return '';
+        s = Math.floor(s);
+        const m = Math.floor(s / 60);
+        const ss = String(s % 60).padStart(2, '0');
+        return m + ':' + ss;
+    }
+
+    function navigateToSerie(serieUrl) {
+        if (!serieUrl) return;
+        // If it's a "go:" url, we need to handle it or let the app handle it
+        if (serieUrl.startsWith('go:')) {
+            const id = serieUrl.split(':')[1];
+            openDetail(+id);
+        } else {
+            location.href = serieUrl;
+        }
+    }
+
+    function cwCardHTML(m, idx) {
+        let poster = m.poster;
+        if (!poster && window.DATA) {
+            const info = window.DATA.find(d => String(d.id) === String(m.serieId) || d.url === 'go:' + m.serieId);
+            if (info) poster = info.poster || info.image || '';
+        }
+
+        const posterStyle = poster
+            ? `background-image:url('${poster}');background-size:cover;background-position:center`
+            : 'background:linear-gradient(135deg,#0a1628,#001a0d)';
+        const pct = Math.min(100, Math.max(2, m.progress || 0));
+        const timeLeft = m.duration && m.currentTime ? fmtCWTime(m.duration - m.currentTime) : '';
+        const subLabel = m.epType === 'movie'
+            ? `Película`
+            : `${m.seasonLabel ? m.seasonLabel + ' · ' : ''}Ep. ${m.epNum}${m.epTitle ? ' — ' + m.epTitle : ''}`;
+
+        return `<div class="cw-card" data-cw-idx="${idx}" data-cw-key="${m.serieId}" style="animation:revealIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards;animation-delay:${idx * 0.06}s;opacity:0">
+  <div class="cw-thumb" style="${posterStyle}">
+    <div class="cw-thumb-overlay"></div>
+    <div class="cw-play-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    </div>
+    <button class="cw-remove-btn" data-cw-remove="${m.serieId}" aria-label="Quitar de Continuar Viendo">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="cw-progress-bar"><div class="cw-progress-fill" style="width:${pct}%"></div></div>
+  </div>
+  <div class="cw-info">
+    <div class="cw-title">${m.serieTitle}</div>
+    <div class="cw-sub">${subLabel}</div>
+    ${timeLeft ? `<div class="cw-time-left">${timeLeft} restante</div>` : ''}
+  </div>
+</div>`;
+    }
+
+    function renderContinueWatching(isSync = false) {
+        const section = $('cw-section');
+        const track = $('cw-track');
+        if (!section || !track) return;
+
+        const items = getCWItems();
+        if (!items.length) {
+            section.style.display = 'none';
+            console.log('CW: No items to show');
+            return;
+        }
+
+        if (isSync && track.children.length === items.length) {
+            let matches = 0;
+            items.forEach((m, i) => {
+                const card = track.querySelector(`.cw-card[data-cw-key="${m.serieId}"]`);
+                if (card) {
+                    matches++;
+                    const fill = card.querySelector('.cw-progress-fill');
+                    if (fill) fill.style.width = `${Math.min(100, Math.max(2, m.progress || 0))}%`;
+                    const sub = card.querySelector('.cw-sub');
+                    const subLabel = m.epType === 'movie' ? `Película` : `${m.seasonLabel ? m.seasonLabel + ' · ' : ''}Ep. ${m.epNum}${m.epTitle ? ' — ' + m.epTitle : ''}`;
+                    if (sub && sub.textContent !== subLabel) sub.textContent = subLabel;
+                    const tl = card.querySelector('.cw-time-left');
+                    if (tl && m.duration) {
+                        const timeText = `${fmtCWTime(m.duration - m.currentTime)} restante`;
+                        if (tl.textContent !== timeText) tl.textContent = timeText;
+                    }
+                }
+            });
+            if (matches === items.length) return;
+        }
+
+        console.log('CW: Full render (' + items.length + ' items)');
+        section.style.display = '';
+        track.innerHTML = items.map((m, i) => cwCardHTML(m, i)).join('');
+
+        track.onclick = (e) => {
+            const removeBtn = e.target.closest('.cw-remove-btn');
+            if (removeBtn) {
+                e.stopPropagation();
+                _pendingCWDeleteId = removeBtn.dataset.cwRemove;
+                openModal('cw-delete-confirm-overlay');
+                return;
+            }
+
+            const card = e.target.closest('.cw-card');
+            if (card) {
+                const idx = parseInt(card.dataset.cwIdx);
+                const m = items[idx];
+                if (m) {
+                    console.log('CW: Navigating to', m.serieUrl);
+                    navigateToSerie(m.serieUrl);
+                }
+            }
+        };
+    }
+
     function renderHome() {
+
         const featured = visibleDATA().filter(d => d.featured);
         // Películas: 1 episodio o tipo película
         const movies = visibleDATA().filter(d => isMovie(d)).slice(0, 12);
@@ -683,7 +864,10 @@
         initSlider('movies-track', 'movies-dots', movies.length ? movies : visibleDATA().slice(0, 10), false, 'vertical', false);
         initSlider('series-track', 'series-dots', series.length ? series : visibleDATA().slice(0, 10), false, 'vertical', false);
 
+        renderContinueWatching();
+
         const grid = $('home-grid');
+
         if (!grid) return;
         const sorted = [...visibleDATA()].sort((a, b) => (b.addedDate || '').localeCompare(a.addedDate || '')).slice(0, 5);
         grid.innerHTML = sorted.map((d, i) => recentCardHTML(d, i + 1, i)).join('');
@@ -2286,7 +2470,39 @@
         const helpBtn = $("help-backup-btn");
         if (helpBtn) helpBtn.addEventListener("click", () => navigateTo("settings-help"));
 
+        // CW Delete
+        const cwDeleteCancel = $('cw-delete-cancel');
+        if (cwDeleteCancel) cwDeleteCancel.addEventListener('click', () => closeModal('cw-delete-confirm-overlay'));
+
+        const cwDeleteConfirm = $('cw-delete-confirm');
+        if (cwDeleteConfirm) {
+            cwDeleteConfirm.addEventListener('click', () => {
+                if (_pendingCWDeleteId) {
+                    console.log('CW: Deleting metadata for', _pendingCWDeleteId);
+                    localStorage.removeItem('cw_meta_' + _pendingCWDeleteId);
+                    // Also check for legacy resume keys
+                    const allKeys = Object.keys(localStorage);
+                    allKeys.forEach(k => {
+                        if (k.startsWith('resume_' + _pendingCWDeleteId + '_')) {
+                            localStorage.removeItem(k);
+                        }
+                    });
+                    closeModal('cw-delete-confirm-overlay');
+                    renderContinueWatching();
+                    showToast('Eliminado de Continuar Viendo');
+                }
+            });
+        }
+
+        const cwDeleteOverlay = $('cw-delete-confirm-overlay');
+        if (cwDeleteOverlay) {
+            cwDeleteOverlay.addEventListener('click', (e) => {
+                if (e.target === cwDeleteOverlay) closeModal('cw-delete-confirm-overlay');
+            });
+        }
+
         ["backup-text-overlay", "restore-text-overlay", "h-confirm-overlay"].forEach(id => {
+
             const o = $(id);
             if (o) o.addEventListener("click", e => { if (e.target === o) closeModal(id); });
         });
