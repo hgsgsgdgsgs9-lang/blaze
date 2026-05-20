@@ -398,12 +398,21 @@
 
     function generateTextBackup() {
         try {
+            const cwData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k.startsWith('cw_meta_') || k.startsWith('resume_') || k.startsWith('watched_')) {
+                    cwData[k] = localStorage.getItem(k);
+                }
+            }
+
             const data = {
                 favs: favs,
                 watchStatus: watchStatus,
                 history: searchHistory,
+                cw: cwData,
                 settings: { h: hCatEnabled },
-                v: '1.1',
+                v: '1.2',
                 app: 'WolfAnime'
             };
             const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
@@ -424,23 +433,27 @@
         try {
             const json = decodeURIComponent(escape(atob(area.value.trim())));
             const data = JSON.parse(json);
+            
             if (data.favs) { favs = data.favs; saveFavs(); }
             if (data.watchStatus) { watchStatus = data.watchStatus; saveWatchStatus(); }
             if (data.history) { searchHistory = data.history; saveSearchHistory(); }
-            if (data.settings) {
-                if (data.settings.h !== undefined) localStorage.setItem('h_enabled', data.settings.h ? '1' : '0');
-
+            
+            if (data.cw) {
+                Object.entries(data.cw).forEach(([k, v]) => {
+                    localStorage.setItem(k, v);
+                });
             }
+
+            if (data.settings) {
+                if (data.settings.h !== undefined) {
+                    hCatEnabled = data.settings.h;
+                    localStorage.setItem('h_enabled', hCatEnabled ? '1' : '0');
+                }
+            }
+
             showToast('Restauración completada');
             closeModal('restore-text-overlay');
-
-            // Refrescar UI dinámicamente
-            renderHomeFavs();
-            renderFavorites();
-            renderProfile();
-            renderCategories();
-            if (state.view === 'all-library') renderAllLibrary();
-            if (state.view === 'search') renderSearch($('search-input').value, state.catFilter);
+            setTimeout(() => location.reload(), 1200);
         } catch (e) {
             showToast('Código de respaldo inválido', '<span style="color:#ff4d6d">!</span>');
         }
@@ -451,7 +464,6 @@
             favs = [];
             saveFavs();
             renderFavorites();
-            renderProfile();
             renderHome();
             showToast('Favoritos borrados');
         }
@@ -470,12 +482,23 @@
 
     function exportUserData() {
         try {
+            // Collect all "Continue Watching" related keys from localStorage
+            const cwData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k.startsWith('cw_meta_') || k.startsWith('resume_') || k.startsWith('watched_')) {
+                    cwData[k] = localStorage.getItem(k);
+                }
+            }
+
             const data = {
                 favorites: favs,
                 watchStatus: watchStatus,
                 searchHistory: searchHistory,
+                continueWatching: cwData,
                 settings: {
                     hCatEnabled: hCatEnabled,
+                    preferredLang: localStorage.getItem('preferred_lang') || 'Latino'
                 },
                 exportDate: new Date().toISOString(),
                 app: 'WolfAnime'
@@ -484,10 +507,10 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `wolfanime_data_${new Date().toISOString().slice(0, 10)}.json`;
+            a.download = `wolfanime_full_backup_${new Date().toISOString().slice(0, 10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            showToast('Datos exportados');
+            showToast('Respaldo completo exportado');
         } catch (e) {
             showToast('Error al exportar', '<span style="color:#ff4d6d">!</span>');
         }
@@ -504,27 +527,47 @@
             reader.onload = event => {
                 try {
                     const data = JSON.parse(event.target.result);
+                    
+                    // 1. Favorites
                     if (data.favorites) {
                         favs = data.favorites;
                         saveFavs();
                     }
+                    
+                    // 2. Watch Status (Mi Lista)
                     if (data.watchStatus) {
                         watchStatus = data.watchStatus;
                         saveWatchStatus();
                     }
+                    
+                    // 3. Continue Watching (Progress, Medata, Watched marks)
+                    if (data.continueWatching) {
+                        Object.entries(data.continueWatching).forEach(([k, v]) => {
+                            localStorage.setItem(k, v);
+                        });
+                    }
+
+                    // 4. Settings
                     if (data.settings) {
                         if (data.settings.hCatEnabled !== undefined) {
-                            localStorage.setItem('h_enabled', data.settings.hCatEnabled ? '1' : '0');
+                            hCatEnabled = data.settings.hCatEnabled;
+                            localStorage.setItem('h_enabled', hCatEnabled ? '1' : '0');
+                        }
+                        if (data.settings.preferredLang) {
+                            localStorage.setItem('preferred_lang', data.settings.preferredLang);
                         }
                     }
+
+                    // 5. Search History
                     if (data.searchHistory) {
                         searchHistory = data.searchHistory;
                         saveSearchHistory();
                     }
-                    showToast('Datos importados correctamente');
-                    setTimeout(() => location.reload(), 1500);
-                } catch (err) {
-                    showToast('Error al importar', '<span style="color:#ff4d6d">!</span>');
+
+                    showToast('Datos restaurados correctamente');
+                    setTimeout(() => location.reload(), 1200);
+                } catch (e) {
+                    showToast('Error: archivo inválido', '<span style="color:#ff4d6d">!</span>');
                 }
             };
             reader.readAsText(file);
@@ -1634,7 +1677,6 @@
 
         document.getElementById('modal-poster').style.background = posterBg(item);
         document.getElementById('modal-title').textContent = item.title;
-        document.getElementById('modal-genre').textContent = item.genre;
 
         updateModalChecks();
 
@@ -1707,12 +1749,6 @@
         closeMyListModal();
     });
 
-    $('modal-details-btn').addEventListener('click', () => {
-        if (modalItemId === null) return;
-        const id = modalItemId;
-        closeMyListModal();
-        openDetail(id);
-    });
 
     function renderFilterChips() {
         const chips = $('filter-chips');
