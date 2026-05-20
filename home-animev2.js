@@ -429,7 +429,7 @@
             if (data.history) { searchHistory = data.history; saveSearchHistory(); }
             if (data.settings) {
                 if (data.settings.h !== undefined) localStorage.setItem('h_enabled', data.settings.h ? '1' : '0');
-                if (data.settings.aw !== undefined) localStorage.setItem('auto_watched', data.settings.aw ? '1' : '0');
+
             }
             showToast('Restauración completada');
             closeModal('restore-text-overlay');
@@ -1283,16 +1283,8 @@
         const pill = $('h-toggle-pill');
         if (pill) pill.classList.toggle('active', hCatEnabled);
 
-        const awPill = $('cfg-autowatched-pill');
-        if (awPill) {
-            const savedAW = localStorage.getItem('auto_watched');
-            if (savedAW === null) {
-                localStorage.setItem('auto_watched', '1');
-                awPill.classList.add('active');
-            } else {
-                awPill.classList.toggle('active', savedAW === '1');
-            }
-        }
+        // Auto-watched active by default internally
+        localStorage.setItem('auto_watched', '1');
 
         const langSel = $('preferred-lang-select');
         if (langSel) {
@@ -1713,6 +1705,13 @@
         if (modalItemId === null || modalPendingStatus === undefined) return;
         setWatchStatus(modalItemId, modalPendingStatus || null);
         closeMyListModal();
+    });
+
+    $('modal-details-btn').addEventListener('click', () => {
+        if (modalItemId === null) return;
+        const id = modalItemId;
+        closeMyListModal();
+        openDetail(id);
     });
 
     function renderFilterChips() {
@@ -2185,16 +2184,6 @@
             });
         }
 
-        const autoWatchToggle = document.getElementById('cfg-autowatched-row');
-        if (autoWatchToggle) {
-            autoWatchToggle.addEventListener('click', () => {
-                const current = localStorage.getItem('auto_watched');
-                const next = (current === null || current === '1') ? '0' : '1';
-                localStorage.setItem('auto_watched', next);
-                const pill = document.getElementById('cfg-autowatched-pill');
-                if (pill) pill.classList.toggle('active', next === '1');
-            });
-        }
 
         const langSelect = document.getElementById('preferred-lang-select');
         if (langSelect) {
