@@ -453,10 +453,22 @@
 
             showToast('Restauración completada');
             closeModal('restore-text-overlay');
-            setTimeout(() => location.reload(), 1200);
+            refreshAllUI();
         } catch (e) {
             showToast('Código de respaldo inválido', '<span style="color:#ff4d6d">!</span>');
         }
+    }
+
+    function refreshAllUI() {
+        renderHome();
+        renderFavorites();
+        renderProfile();
+        renderCategories();
+        renderContinueWatching();
+        renderFilterChips();
+        if (state.view === 'all-library') renderAllLibrary();
+        if (state.view === 'search') renderSearch($('search-input')?.value || '', state.catFilter);
+        if (state.view === 'settings-data') updateSearchHistoryCountLabel();
     }
 
     function clearFavorites() {
@@ -565,7 +577,8 @@
                     }
 
                     showToast('Datos restaurados correctamente');
-                    setTimeout(() => location.reload(), 1200);
+                    closeModalByOverlayId('import-data-modal'); // If applicable, otherwise just finish
+                    refreshAllUI();
                 } catch (e) {
                     showToast('Error: archivo inválido', '<span style="color:#ff4d6d">!</span>');
                 }
