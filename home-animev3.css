@@ -2707,6 +2707,7 @@ body {
 
 .modal-overlay.open {
     pointer-events: auto;
+    background: rgba(0, 0, 0, 0.85);
 }
 
 .modal-sheet {
@@ -2716,6 +2717,7 @@ body {
     border-radius: 28px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     position: relative;
+    padding: 24px;
     transform: translateY(40px) scale(0.95);
     opacity: 0;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -2807,15 +2809,25 @@ body {
     position: relative;
 }
 
-.modal-poster {
+.modal-poster, .backup-icon {
     width: 60px;
     height: 85px;
-    border-radius: 10px;
+    border-radius: 12px;
     background-size: cover;
     background-position: center;
     flex-shrink: 0;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.backup-icon {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
 }
 
 .modal-info {
@@ -2934,7 +2946,7 @@ body {
 .modal-divider {
     height: 1px;
     background: rgba(255, 255, 255, 0.07);
-    margin-bottom: 14px
+    margin: 0 -24px 20px;
 }
 
 .modal-section-label {
