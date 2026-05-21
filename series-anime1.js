@@ -54,7 +54,7 @@ function updateCWMetadata(currentTime, duration) {
         const ep = currentEpisode;
         const season = SERIE.seasons[activeSeason];
         const key = resumeKey();
-        
+
         const meta = {
             serieId: SERIE.id,
             serieTitle: SERIE.title,
@@ -73,7 +73,7 @@ function updateCWMetadata(currentTime, duration) {
             updatedAt: Date.now()
         };
         localStorage.setItem(metaKey, JSON.stringify(meta));
-    } catch(e) {}
+    } catch (e) { }
 }
 
 function saveProgress(currentTime, duration) {
@@ -86,7 +86,7 @@ function saveProgress(currentTime, duration) {
             const metaKey = 'cw_meta_' + SERIE.id;
             const existing = JSON.parse(localStorage.getItem(metaKey) || 'null');
             if (existing && existing.resumeKey === key) localStorage.removeItem(metaKey);
-        } catch(e) {}
+        } catch (e) { }
         return;
     }
     const time = Math.floor(currentTime);
@@ -241,14 +241,12 @@ function playEpisode(seasonIdx, epNum, animate = false) {
         return;
     }
 
-    // Marcar como visto si está activado
-    if (localStorage.getItem('auto_watched') === '1') {
-        setWatched(seasonIdx, epNum, true);
-        const input = document.querySelector(`.ep-switch[data-s="${seasonIdx}"][data-e="${epNum}"] input`);
-        if (input) input.checked = true;
-        const lbl = $(`lbl-${seasonIdx}-${epNum}`);
-        if (lbl) { lbl.textContent = 'Visto'; lbl.classList.add('on'); }
-    }
+    // Marcar como visto (Siempre activo por defecto)
+    setWatched(seasonIdx, epNum, true);
+    const input = document.querySelector(`.ep-switch[data-s="${seasonIdx}"][data-e="${epNum}"] input`);
+    if (input) input.checked = true;
+    const lbl = $(`lbl-${seasonIdx}-${epNum}`);
+    if (lbl) { lbl.textContent = 'Visto'; lbl.classList.add('on'); }
 
     // Global language persistence
     let prefLang = localStorage.getItem('preferred_lang');
@@ -264,7 +262,7 @@ function playEpisode(seasonIdx, epNum, animate = false) {
     activeServer = 0;
 
     resumeToastShown = false;
-    
+
     // Auto-update Home Slider meta
     updateCWMetadata(0, 0);
 
@@ -275,8 +273,18 @@ function playEpisode(seasonIdx, epNum, animate = false) {
     const sHeader = $('serie-header');
     if (sHeader) sHeader.style.display = 'none';
 
+    // Ajustar label del botón cerrar si es película
+    const closeBtn = $('btn-close-player');
+    if (closeBtn) {
+        closeBtn.setAttribute('aria-label', SERIE.type === 'movie' ? 'Volver al catálogo' : 'Volver a episodios');
+    }
+
     // Actualizar título
-    $('player-ep-title').textContent = `Ep. ${epNum} · ${currentEpisode.title}`;
+    if (SERIE.type === 'movie') {
+        $('player-ep-title').textContent = currentEpisode.title;
+    } else {
+        $('player-ep-title').textContent = `Ep. ${epNum} · ${currentEpisode.title}`;
+    }
 
     // Configurar botones de navegación con lógica de temporadas
     const prevBtn = $('btn-prev');
@@ -344,6 +352,11 @@ function playEpisode(seasonIdx, epNum, animate = false) {
 }
 
 function closePlayer() {
+    if (SERIE.type === 'movie') {
+        location.href = SERIE.backUrl || 'home.html';
+        return;
+    }
+
     $('player-section').style.display = 'none';
     $('episodes-list').style.display = 'flex';
     document.querySelector('.seasons-wrap').style.display = 'block';
@@ -702,7 +715,7 @@ function loadIframe(wrap, url, server, loader, requestId) {
             fsBtn.innerHTML = (isFs ? iconCollapse : iconExpand) + `<span>${isFs ? 'Salir' : 'Pantalla completa'}</span>`;
         };
         updateBtn();
-        fsBtn.addEventListener('mouseenter', () => fsBtn.style.background = 'rgba(0,230,118,0.85)');
+        fsBtn.addEventListener('mouseenter', () => fsBtn.style.background = 'rgba(255,170,0,0.85)');
         fsBtn.addEventListener('mouseleave', () => fsBtn.style.background = 'rgba(0,0,0,0.7)');
         fsBtn.addEventListener('click', () => {
             if (!document.fullscreenElement) {
@@ -773,7 +786,7 @@ function buildVideoPlayer(wrap, url, poster, videoType, mainLoader, server, requ
             src: url,
             poster: poster || '',
             autoplay: false,
-            color: '#00E676',
+            color: '#FFAA00',
             volume: 0.8
         };
 
@@ -919,7 +932,7 @@ function buildVideoPlayer(wrap, url, poster, videoType, mainLoader, server, requ
                     const skipBtn = document.createElement('button');
                     skipBtn.id = 'vp-skip-intro';
                     skipBtn.textContent = 'Omitir intro';
-                    skipBtn.style.cssText = 'position:absolute;bottom:100px;right:20px;padding:8px 16px;background:rgba(0,230,118,0.9);color:#000;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;opacity:0;transition:opacity 0.3s;z-index:9999;pointer-events:auto';
+                    skipBtn.style.cssText = 'position:absolute;bottom:100px;right:20px;padding:8px 16px;background:rgba(255,170,0,0.9);color:#000;border:none;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer;opacity:0;transition:opacity 0.3s;z-index:9999;pointer-events:auto';
                     container.appendChild(skipBtn);
 
                     skipBtn.addEventListener('click', (e) => {
@@ -1063,46 +1076,7 @@ function renderPlayer(animate = false) {
     });
 }
 
-// ── Modal configuración ───────────────────────────────────
-(function () {
-    const overlay = $('cfg-overlay');
-    const sheet = $('cfg-sheet');
-    const pill = $('cfg-autowatched-pill');
-    const row = $('cfg-autowatched-row');
-    let aw = localStorage.getItem('auto_watched') === '1';
 
-    function updatePill() { if (pill) pill.classList.toggle('active', aw); }
-    updatePill();
-
-    const cfgBtn = $('cfg-btn');
-    if (cfgBtn) {
-        cfgBtn.addEventListener('click', () => {
-            overlay.style.background = 'rgba(0,0,0,0.7)';
-            overlay.style.pointerEvents = 'auto';
-            sheet.style.transform = 'scale(1)';
-            sheet.style.opacity = '1';
-        });
-    }
-
-    function close() {
-        if (!overlay) return;
-        overlay.style.background = 'rgba(0,0,0,0)';
-        overlay.style.pointerEvents = 'none';
-        sheet.style.transform = 'scale(0.92)';
-        sheet.style.opacity = '0';
-    }
-
-    if (overlay) overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
-    const cfgClose = $('cfg-close');
-    if (cfgClose) cfgClose.addEventListener('click', close);
-    if (row) {
-        row.addEventListener('click', () => {
-            aw = !aw;
-            localStorage.setItem('auto_watched', aw ? '1' : '0');
-            updatePill();
-        });
-    }
-})();
 
 // ── Eventos del reproductor ───────────────────────────────
 const closePlayerBtn = $('btn-close-player');
@@ -1169,29 +1143,40 @@ if (castBtn) {
 }
 
 // ── Inicialización ────────────────────────────────────────
-renderTabs();
-renderEpisodes(true);
+if (SERIE.type === 'movie') {
+    // Es una película: no renderizar menús y abrir directamente
+    const firstS = SERIE.seasons[0];
+    if (firstS && firstS.episodes.length > 0) {
+        // Un pequeño delay para asegurar que el DOM esté listo
+        setTimeout(() => playEpisode(0, firstS.episodes[0].num), 100);
+    }
+} else {
+    // Es una serie: comportamiento normal
+    renderTabs();
+    renderEpisodes(true);
 
-if (localStorage.getItem('auto_watched') === '1') {
-    const map = getWatchedMap();
-    let highestS = -1;
-    let highestE = -1;
+    // ── Inicialización Auto-Watched (siempre activo para series) ──────────
+    (function () {
+        const map = getWatchedMap();
+        let highestS = -1;
+        let highestE = -1;
 
-    for (let s = SERIE.seasons.length - 1; s >= 0; s--) {
-        const eps = SERIE.seasons[s].episodes;
-        for (let i = eps.length - 1; i >= 0; i--) {
-            if (isWatched(map, s, eps[i].num)) {
-                highestS = s;
-                highestE = eps[i].num;
-                break;
+        for (let s = SERIE.seasons.length - 1; s >= 0; s--) {
+            const eps = SERIE.seasons[s].episodes;
+            for (let i = eps.length - 1; i >= 0; i--) {
+                if (isWatched(map, s, eps[i].num)) {
+                    highestS = s;
+                    highestE = eps[i].num;
+                    break;
+                }
             }
+            if (highestS !== -1) break;
         }
-        if (highestS !== -1) break;
-    }
 
-    if (highestS !== -1 && highestE !== -1) {
-        setTimeout(() => playEpisode(highestS, highestE), 150);
-    }
+        if (highestS !== -1 && highestE !== -1) {
+            setTimeout(() => playEpisode(highestS, highestE), 150);
+        }
+    })();
 }
 
 
