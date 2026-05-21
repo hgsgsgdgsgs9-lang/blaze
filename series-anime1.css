@@ -1,6 +1,6 @@
 :root {
-  --accent: #00E676;
-  --accent-dim: rgba(0, 230, 118, 0.12);
+  --accent: #FFAA00 !important;
+  --accent-dim: rgba(255, 170, 0, 0.12);
   --bg: #0A0A0A;
   --bg2: #111;
   --bg3: #1a1a1a;
@@ -328,7 +328,7 @@ body {
 
 .ep-switch-label {
   font-size: 11px;
-  color: var(--text3);
+  color: var(--accent);
   transition: color 0.2s;
   user-select: none
 }
@@ -542,20 +542,20 @@ body {
 }
 
 .btn-cast {
-  background: rgba(0, 230, 118, 0.1) !important;
-  border-color: rgba(0, 230, 118, 0.3) !important;
+  background: rgba(255, 170, 0, 0.1) !important;
+  border-color: rgba(255, 170, 0, 0.3) !important;
   color: var(--accent) !important;
 }
 
 .btn-cast:active {
-  background: rgba(0, 230, 118, 0.22) !important;
+  background: rgba(255, 170, 0, 0.22) !important;
 }
 
 .btn-cast:focus,
 .btn-cast:focus-within,
 .btn-cast:target {
-  background: rgba(0, 230, 118, 0.1) !important;
-  border-color: rgba(0, 230, 118, 0.3) !important;
+  background: rgba(255, 170, 0, 0.1) !important;
+  border-color: rgba(255, 170, 0, 0.3) !important;
 }
 
 .btn-cast:focus-visible {
@@ -776,8 +776,8 @@ body {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(0, 230, 118, 0.12);
-  border: 1.5px solid rgba(0, 230, 118, 0.3);
+  background: rgba(255, 170, 0, 0.12);
+  border: 1.5px solid rgba(255, 170, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -934,10 +934,10 @@ body {
   justify-content: center;
   gap: 6px;
   padding: 10px;
-  background: rgba(0, 230, 118, 0.1);
-  border: 1px solid rgba(0, 230, 118, 0.3);
+  background: rgba(255, 170, 0, 0.1);
+  border: 1px solid rgba(255, 170, 0, 0.3);
   border-radius: 10px;
-  color: #00E676;
+  color: #FFAA00;
   font-size: 12px;
   font-weight: 700;
   text-decoration: none;
@@ -947,14 +947,14 @@ body {
 }
 
 #cast-modal-download:active {
-  background: rgba(0, 230, 118, 0.2);
+  background: rgba(255, 170, 0, 0.2);
   transform: scale(0.96);
 }
 
 #cast-modal-transmit {
   flex: 1;
   padding: 10px;
-  background: #00E676;
+  background: #FFAA00;
   border: none;
   border-radius: 10px;
   color: #000;
@@ -969,7 +969,7 @@ body {
 }
 
 #cast-modal-transmit:active {
-  background: #00c853 !important;
+  background: #FF8C00 !important;
   color: #000 !important;
   transform: scale(0.96);
 }
@@ -1076,13 +1076,16 @@ body {
   .seasons-wrap::-webkit-scrollbar {
     width: 4px;
   }
+
   .seasons-wrap::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .seasons-wrap::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 4px;
   }
+
   .seasons-wrap::-webkit-scrollbar-thumb:hover {
     background: var(--accent);
   }
@@ -1101,7 +1104,8 @@ body {
     background: #000;
   }
 
-  #player-header, #player-footer {
+  #player-header,
+  #player-footer {
     padding: 0 48px;
   }
 }
