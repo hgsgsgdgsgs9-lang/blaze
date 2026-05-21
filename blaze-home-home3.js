@@ -1099,15 +1099,28 @@
     function initSlider(trackId, dotsId, data, isAutoPlay, layout = 'horizontal', showPagination = true) {
         const track = $(trackId);
         const dotsEl = $(dotsId);
-        if (!track || !dotsEl || !data.length) return;
+        if (!track || !dotsEl) return;
+
+        // Clear existing content immediately to support real-time filtering updates
+        track.innerHTML = '';
+        dotsEl.innerHTML = '';
+
+        if (!data || !data.length) {
+            // Find common section containers (.home-section or parent) to hide the whole block
+            const section = track.closest('.home-section') || track.parentElement;
+            if (section) section.style.display = 'none';
+            if (track._sliderTimer) clearInterval(track._sliderTimer);
+            return;
+        }
+
+        const section = track.closest('.home-section') || track.parentElement;
+        if (section) section.style.display = '';
 
         if (!showPagination) {
             dotsEl.style.display = 'none';
         } else {
             dotsEl.style.display = '';
         }
-
-        track.innerHTML = '';
         track.scrollLeft = 0;   // reset any saved scroll position
         const frag = document.createDocumentFragment();
         data.forEach((item, index) => {
