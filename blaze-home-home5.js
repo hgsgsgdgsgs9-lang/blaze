@@ -599,12 +599,7 @@
         }
 
         if (p.id) {
-            const item = (window.DATA || []).find(d => String(d.id) === p.id);
-            if (item && item.url && item.url !== '#' && item.url !== '') {
-                window.top.location.href = item.url;
-            } else {
-                openDetail(+p.id);
-            }
+            openDetail(+p.id);
             return true;
         }
         if (p.cat) {
@@ -1135,7 +1130,6 @@
             const div = document.createElement('div');
             div.className = `slider-card ${layout}${h ? ' slider-card-h' : ''}`;
             div.dataset.id = item.id;
-            div.onclick = () => openDetail(item.id);
             const statusColor = '';
             const year = item.date ? item.date.substring(0, 4) : '';
             const bg = layout === 'horizontal' ? backdropBg(item) : posterBg(item);
@@ -2177,12 +2171,7 @@
         const card = e.target.closest('.card, .slider-card, .mini-card, .recent-card, .scard');
         if (card && card.dataset.id) {
             const id = +card.dataset.id;
-            const item = DATA.find(d => d.id === id);
-            if (item && item.url && item.url !== '#' && item.url !== '') {
-                window.top.location.href = item.url;
-            } else {
-                openDetail(id);
-            }
+            openDetail(id);
             return;
         }
 
