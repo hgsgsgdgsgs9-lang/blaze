@@ -1111,8 +1111,9 @@
         track.scrollLeft = 0;   // reset any saved scroll position
         const frag = document.createDocumentFragment();
         data.forEach((item, index) => {
+            const h = isH(item);
             const div = document.createElement('div');
-            div.className = `slider-card ${layout}`;
+            div.className = `slider-card ${layout}${h ? ' slider-card-h' : ''}`;
             div.dataset.id = item.id;
             div.onclick = () => openDetail(item.id);
             const statusColor = '';
@@ -1122,6 +1123,7 @@
             div.innerHTML = `<div class="slider-poster">
                 <div ${getLazyBgAttrs('slider-poster-bg', bg)}></div>
                 <div class="slider-poster-overlay"></div>
+                ${h ? '<span class="h-badge">18+</span>' : ''}
                 ${layout === 'vertical' ? '' : (!isMovie(item) ? `<span class="slider-poster-eps">${item.episodes} eps</span>` : `<span class="slider-poster-eps">Película</span>`)}
                 <div class="slider-poster-info">
                     <div class="slider-poster-title">${item.title}</div>
@@ -1195,15 +1197,20 @@
 
         if (isAutoPlay) {
             const startAuto = () => {
-                clearInterval(timer);
-                timer = setInterval(() => {
+                if (track._sliderTimer) clearInterval(track._sliderTimer);
+                track._sliderTimer = setInterval(() => {
                     autoIdx = (autoIdx + 1) % data.length;
                     scrollToIndex(autoIdx);
                 }, 5000);
             };
             startAuto();
-            track.addEventListener('touchstart', () => clearInterval(timer), { passive: true });
+            track.addEventListener('touchstart', () => clearInterval(track._sliderTimer), { passive: true });
             track.addEventListener('touchend', startAuto, { passive: true });
+        } else {
+            if (track._sliderTimer) {
+                clearInterval(track._sliderTimer);
+                delete track._sliderTimer;
+            }
         }
     }
 
