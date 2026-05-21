@@ -939,8 +939,8 @@
         const series = visibleDATA().filter(d => !isMovie(d)).slice(0, 12);
 
         initSlider('featured-track', 'featured-dots', featured, true, 'horizontal', true);
-        initSlider('movies-track', 'movies-dots', movies.length ? movies : visibleDATA().slice(0, 10), false, 'vertical', false);
-        initSlider('series-track', 'series-dots', series.length ? series : visibleDATA().slice(0, 10), false, 'vertical', false);
+        initSlider('movies-track', 'movies-dots', movies, false, 'vertical', false);
+        initSlider('series-track', 'series-dots', series, false, 'vertical', false);
 
         renderContinueWatching();
 
