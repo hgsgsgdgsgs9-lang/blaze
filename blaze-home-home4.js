@@ -959,7 +959,14 @@
     let _heroTimer = null;
 
     function initDynamicHero(items) {
-        if (!items || !items.length) return;
+        const heroSection = $('hero-section');
+        if (!items || !items.length) {
+            if (heroSection) heroSection.style.display = 'none';
+            clearInterval(_heroTimer);
+            return;
+        }
+
+        if (heroSection) heroSection.style.display = '';
         _heroItems = items;
         _heroIdx = 0;
         clearInterval(_heroTimer);
