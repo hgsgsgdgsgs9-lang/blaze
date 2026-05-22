@@ -783,28 +783,25 @@
     function navigateToSerie(serieUrl) {
         if (!serieUrl) return;
 
-        let finalUrl = serieUrl;
-
-        // Si es una URL interna "go:", intentamos resolverla a una URL real en DATA
+        // Si es una URL interna "go:", siempre abrimos el detalle interno
         if (serieUrl.startsWith('go:')) {
             const idStr = serieUrl.split(':')[1];
-            const item = (window.DATA || []).find(d => String(d.id) === idStr);
-
-            if (item && item.url && item.url !== '#' && item.url !== '') {
-                finalUrl = item.url;
-            } else {
-                // Si no hay URL real, abrimos el detalle (comportamiento original)
-                openDetail(+idStr);
-                return;
-            }
+            openDetail(+idStr);
+            return;
         }
 
-        // Navegar a la URL final
-        if (finalUrl.startsWith('http')) {
-            location.href = finalUrl;
+        // Para URLs externas directas (sin go:), intentar encontrar el item por URL
+        const item = (window.DATA || []).find(d => d.url === serieUrl);
+        if (item) {
+            openDetail(+item.id);
+            return;
+        }
+
+        // Fallback: navegar directamente si no hay item coincidente
+        if (serieUrl.startsWith('http')) {
+            location.href = serieUrl;
         } else {
-            // Intentar navegación relativa cuidando la ruta
-            window.top.location.href = finalUrl;
+            window.top.location.href = serieUrl;
         }
     }
 
