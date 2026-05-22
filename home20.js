@@ -781,23 +781,37 @@
     }
 
     function navigateToSerie(serieUrl) {
-        if (!serieUrl || serieUrl === '#' || serieUrl === '') return;
+        console.log('navigateToSerie called with URL:', serieUrl);
+        if (!serieUrl || serieUrl === '#' || serieUrl === '') {
+            console.log('Navegación abortada: URL vacía o inválida');
+            return;
+        }
 
         // Si es una URL "go:ID", abrir detalle directamente (sub-navegación)
         if (serieUrl.startsWith('go:')) {
+            console.log('Es un go:ID, abriendo detalles internally');
             const idStr = serieUrl.split(':')[1];
             openDetail(+idStr);
             return;
         }
 
+        console.log('Intentando abrir URL real:', serieUrl);
         // Navegación directa para URLs externas (Botón Reproducir)
         if (serieUrl.startsWith('http')) {
+            console.log('URL HTTP detectada, usando window.location.href');
             window.location.href = serieUrl;
         } else {
+            console.log('URL local o relativa detectada, intentando window.top.location.href');
             try {
                 window.top.location.href = serieUrl;
             } catch(e) {
-                window.location.href = serieUrl;
+                console.error('Error al usar window.top:', e, 'Usando fallback window.location.href');
+                try {
+                    window.location.href = serieUrl;
+                } catch(e2) {
+                    console.error('Error al usar window.location:', e2, 'Usando fallback window.open');
+                    window.open(serieUrl, '_blank');
+                }
             }
         }
     }
@@ -1776,7 +1790,10 @@
         });
 
         document.getElementById('detail-back-btn').addEventListener('click', () => navigateTo(state.prev || 'home', true));
-        document.getElementById('detail-cta-main').addEventListener('click', () => { navigateToSerie(item.url); });
+        document.getElementById('detail-cta-main').addEventListener('click', () => { 
+            console.log('Botón Reproducir presionado. URL del item:', item.url);
+            navigateToSerie(item.url); 
+        });
 
         document.getElementById('detail-fav-btn').addEventListener('click', () => {
             toggleFav(item.id);
