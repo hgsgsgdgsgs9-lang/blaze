@@ -1069,7 +1069,7 @@
         // Botón Ver ahora
         const ctaBtn = $('hero-cta-primary');
         if (ctaBtn) {
-            ctaBtn.onclick = () => { if (item.url) window.top.location.href = item.url; else openDetail(item.id); };
+            ctaBtn.onclick = () => { if (item.url && item.url !== '#' && item.url !== '') navigateToSerie(item.url); else openDetail(item.id); };
         }
 
         // Botón Mi Lista
@@ -1511,7 +1511,7 @@
       </div>
       <div class="fav-watch-btns">
         <button class="ws-btn${ws === 'Viendo' ? ' active' : ''}" data-ws="Viendo" data-ws-item="${item.id}">▶ Viendo</button>
-        <button class="ws-btn${ws === 'Completado' ? ' active' : ''}" data-ws="Completado" data-ws-item="${item.id}">✓ Finalizado</button>
+        <button class="ws-btn${ws === 'Completado' ? ' active' : ''}" data-ws="Completado" data-ws-item="${item.id}">✓ Completado</button>
       </div>
     </div>
     <button class="mylist-remove-btn" data-remove="${item.id}" aria-label="Eliminar de Mi Lista">
@@ -1685,7 +1685,7 @@
         </button>
         <button class="detail-mylist-btn${getWatchStatus(item.id) ? ' in-list' : ''}" id="detail-mylist-btn" data-mylist="${item.id}" aria-label="Añadir a Mi Lista">
           ${getWatchStatus(item.id)
-                ? `${{ Viendo: '▶ Viendo', Completado: '✓ Finalizado' }[getWatchStatus(item.id)] || getWatchStatus(item.id)}`
+                ? `${{ Viendo: '▶ Viendo', Completado: '✓ Completado', Pendiente: '⏱ Pendiente' }[getWatchStatus(item.id)] || getWatchStatus(item.id)}`
                 : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Añadir a Mi Lista`}
         </button>
       </div>
@@ -1778,7 +1778,7 @@
         });
 
         document.getElementById('detail-back-btn').addEventListener('click', () => navigateTo(state.prev || 'home', true));
-        document.getElementById('detail-cta-main').addEventListener('click', () => { location.href = item.url; });
+        document.getElementById('detail-cta-main').addEventListener('click', () => { navigateToSerie(item.url); });
 
         document.getElementById('detail-fav-btn').addEventListener('click', () => {
             toggleFav(item.id);
@@ -1974,7 +1974,7 @@
 
     function updateModalChecks() {
         const ws = modalPendingStatus !== undefined ? modalPendingStatus : getWatchStatus(modalItemId);
-        const keys = ['Viendo', 'Completado'];
+        const keys = ['Viendo', 'Completado', 'Pendiente'];
         keys.forEach(key => {
             const btn = document.querySelector(`[data-modal-ws="${key}"]`);
             const radio = document.getElementById(`modal-check-${key}`);
@@ -2000,10 +2000,10 @@
             const btn = document.getElementById('detail-mylist-btn');
             if (btn) {
                 const ws = getWatchStatus(state.detail.id);
-                const statusIcons = { Viendo: '▶ Viendo', Completado: '✓ Finalizado' };
+                const statusIcons = { Viendo: '▶ Viendo', Completado: '✓ Completado', Pendiente: '⏱ Pendiente' };
                 btn.classList.toggle('in-list', !!ws);
                 btn.innerHTML = ws
-                    ? `${statusIcons[ws] || ''} ${ws}`
+                    ? (statusIcons[ws] || ws)
                     : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Añadir a Mi Lista`;
             }
         }
@@ -2073,7 +2073,7 @@
         const acceptBtn = document.getElementById('remove-confirm-accept');
         const options = document.getElementById('remove-confirm-options');
 
-        const tabNames = { fav: 'Favoritos', Viendo: 'Viendo', Completado: 'Finalizado' };
+        const tabNames = { fav: 'Favoritos', Viendo: 'Viendo', Completado: 'Completado', Pendiente: 'Pendiente' };
 
         if (filter !== 'all') {
             if (title) title.textContent = `¿Eliminar de ${tabNames[filter] || filter}?`;
@@ -2157,7 +2157,7 @@
             const item = DATA.find(d => d.id === +ctaBtn.dataset.cta);
             if (item) {
                 if (item.url && item.url !== '#' && item.url !== '') {
-                    window.top.location.href = item.url;
+                    navigateToSerie(item.url);
                 } else {
                     openDetail(item.id);
                 }
