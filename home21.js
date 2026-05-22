@@ -1791,8 +1791,13 @@
 
         document.getElementById('detail-back-btn').addEventListener('click', () => navigateTo(state.prev || 'home', true));
         document.getElementById('detail-cta-main').addEventListener('click', () => { 
-            console.log('Botón Reproducir presionado. URL del item:', item.url);
-            navigateToSerie(item.url); 
+            console.log('Botón Reproducir presionado. Navegando a URL configurada:', item.url);
+            if (!item.url || item.url === '#') return;
+            try {
+                window.top.location.href = item.url;
+            } catch(e) {
+                try { window.location.href = item.url; } catch(e2) { window.open(item.url, '_blank'); }
+            }
         });
 
         document.getElementById('detail-fav-btn').addEventListener('click', () => {
