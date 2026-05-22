@@ -604,15 +604,17 @@
     }
 
     function updateURL(newParams = {}) {
-        const url = new URL(window.location.href);
-        const params = new URLSearchParams();
+        try {
+            const url = new URL(window.location.href);
+            const params = new URLSearchParams();
 
-        Object.entries(newParams).forEach(([k, v]) => {
-            if (v !== null && v !== undefined && v !== '') params.set(k, v);
-        });
+            Object.entries(newParams).forEach(([k, v]) => {
+                if (v !== null && v !== undefined && v !== '') params.set(k, v);
+            });
 
-        const newUrl = params.toString() ? `${url.pathname}?${params.toString()}` : url.pathname;
-        window.history.replaceState({}, '', newUrl);
+            const newUrl = params.toString() ? `${url.pathname}?${params.toString()}` : url.pathname;
+            window.history.replaceState({}, '', newUrl);
+        } catch(e) {}
 
         localStorage.setItem(APP_STATE_KEY, JSON.stringify(newParams));
     }
