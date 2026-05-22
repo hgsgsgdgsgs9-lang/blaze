@@ -792,9 +792,13 @@
 
         // Navegación directa para URLs externas (Botón Reproducir)
         if (serieUrl.startsWith('http')) {
-            location.href = serieUrl;
+            window.location.href = serieUrl;
         } else {
-            window.top.location.href = serieUrl;
+            try {
+                window.top.location.href = serieUrl;
+            } catch(e) {
+                window.location.href = serieUrl;
+            }
         }
     }
 
