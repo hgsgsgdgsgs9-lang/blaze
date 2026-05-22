@@ -781,29 +781,16 @@
     }
 
     function navigateToSerie(serieUrl) {
-        if (!serieUrl) return;
+        if (!serieUrl || serieUrl === '#' || serieUrl === '') return;
 
-        // Si es una URL "go:ID", abrir detalle directamente
+        // Si es una URL "go:ID", abrir detalle directamente (sub-navegación)
         if (serieUrl.startsWith('go:')) {
             const idStr = serieUrl.split(':')[1];
             openDetail(+idStr);
             return;
         }
 
-        // Si es una URL normal, intentar encontrar el ítem por URL en DATA
-        const item = (window.DATA || []).find(d => d.url === serieUrl);
-        if (item) {
-            openDetail(+item.id);
-            return;
-        }
-
-        // Fallback: Si no hay ítem, pero es un ID numérico (caso raro), intentar abrirlo
-        if (!isNaN(serieUrl)) {
-            openDetail(+serieUrl);
-            return;
-        }
-
-        // Navegación directa para URLs externas sin ítem asociado
+        // Navegación directa para URLs externas (Botón Reproducir)
         if (serieUrl.startsWith('http')) {
             location.href = serieUrl;
         } else {
