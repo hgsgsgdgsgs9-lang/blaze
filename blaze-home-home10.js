@@ -783,21 +783,27 @@
     function navigateToSerie(serieUrl) {
         if (!serieUrl) return;
 
-        // Si es una URL interna "go:", siempre abrimos el detalle interno
+        // Si es una URL "go:ID", abrir detalle directamente
         if (serieUrl.startsWith('go:')) {
             const idStr = serieUrl.split(':')[1];
             openDetail(+idStr);
             return;
         }
 
-        // Para URLs externas directas (sin go:), intentar encontrar el item por URL
+        // Si es una URL normal, intentar encontrar el ítem por URL en DATA
         const item = (window.DATA || []).find(d => d.url === serieUrl);
         if (item) {
             openDetail(+item.id);
             return;
         }
 
-        // Fallback: navegar directamente si no hay item coincidente
+        // Fallback: Si no hay ítem, pero es un ID numérico (caso raro), intentar abrirlo
+        if (!isNaN(serieUrl)) {
+            openDetail(+serieUrl);
+            return;
+        }
+
+        // Navegación directa para URLs externas sin ítem asociado
         if (serieUrl.startsWith('http')) {
             location.href = serieUrl;
         } else {
@@ -1069,7 +1075,7 @@
         // Botón Ver ahora
         const ctaBtn = $('hero-cta-primary');
         if (ctaBtn) {
-            ctaBtn.onclick = () => { if (item.url) window.top.location.href = item.url; else openDetail(item.id); };
+            ctaBtn.onclick = () => openDetail(item.id);
         }
 
         // Botón Mi Lista
@@ -2155,22 +2161,15 @@
         const ctaBtn = e.target.closest('[data-cta]');
         if (ctaBtn) {
             e.stopPropagation();
-            const item = DATA.find(d => d.id === +ctaBtn.dataset.cta);
-            if (item) {
-                if (item.url && item.url !== '#' && item.url !== '') {
-                    window.top.location.href = item.url;
-                } else {
-                    openDetail(item.id);
-                }
-            }
+            const id = +ctaBtn.dataset.cta;
+            openDetail(id);
             return;
         }
 
         const card = e.target.closest('.card, .slider-card, .mini-card, .recent-card, .scard');
         if (card && card.dataset.id) {
             const id = +card.dataset.id;
-            const item = DATA.find(d => d.id === id);
-            if (item) navigateToSerie(item.url || 'go:' + id);
+            openDetail(id);
             return;
         }
 
