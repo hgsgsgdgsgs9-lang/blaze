@@ -926,8 +926,13 @@
                 const idx = parseInt(card.dataset.cwIdx);
                 const m = items[idx];
                 if (m) {
-                    console.log('CW: Navigating to', m.serieUrl);
-                    navigateToSerie(m.serieUrl);
+                    console.log('CW: Navegando a URL de continuar viendo:', m.serieUrl);
+                    if (!m.serieUrl || m.serieUrl === '#') return;
+                    try {
+                        window.top.location.href = m.serieUrl;
+                    } catch(e) {
+                        try { window.location.href = m.serieUrl; } catch(e2) { window.open(m.serieUrl, '_blank'); }
+                    }
                 }
             }
         };
